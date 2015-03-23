@@ -50,6 +50,10 @@ class Customer:
         else:
             return "N/A"
 
+    def transfer(self,transaction,fromAccNum,toAccNum):
+        self.accounts[fromAccNum].withdraw(transaction.amount)
+        self.accounts[toAccNum].deposit(transaction.amount)
+
 
 def _toDollars(number):
     return "${:1.2f}".format(number)
