@@ -1,9 +1,10 @@
 from abcbank.transaction import Transaction
+from datetime import datetime
+
 
 CHECKING = 0
 SAVINGS = 1
 MAXI_SAVINGS = 2
-
 
 class Account:
     def __init__(self, accountType):
@@ -22,22 +23,35 @@ class Account:
         else:
             self.transactions.append(Transaction(-amount))
 
+    # interest earned since last transaction
     def interestEarned(self):
         amount = self.sumTransactions()
+        # days since last transaction
+        lasttr = self.transactions[-1].transactionDate
+        td = datetime.now() - lasttr
+        days = td.days
+
         if self.accountType == SAVINGS:
             if (amount <= 1000):
-                return amount * 0.001
+                return amount * self.compInt(0.001, days)
             else:
-                return 1 + (amount - 1000) * 0.002
+                return 1000 * self.compInt(0.001, days) + (amount-1000) * self.compInt(0.002, days)
         if self.accountType == MAXI_SAVINGS:
-            if (amount <= 1000):
-                return amount * 0.02
-            elif (amount <= 2000):
-                return 20 + (amount - 1000) * 0.05
-            else:
-                return 70 + (amount - 2000) * 0.1
+            rate = 0.05
+            # date of last withdrawal
+            datewds = [ t.transactionDate for t in filter(lambda x:x.amount<0, self.transactions) ]
+            if len(datewds) > 0:
+                delta = datetime.now() - datewds[-1]
+                if delta.days <= 10:
+                    rate = 0.001
+            return amount * self.compInt(rate,days)
         else:
-            return amount * 0.001
+            return amount * self.compInt(0.001, days)
 
     def sumTransactions(self, checkAllTransactions=True):
         return sum([t.amount for t in self.transactions])
+        
+    @staticmethod
+    def compInt(rate,days):
+        dayRate = rate / 365.0
+        return (1 + dayRate)**days - 1
